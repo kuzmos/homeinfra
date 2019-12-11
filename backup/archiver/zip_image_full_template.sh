@@ -20,11 +20,11 @@ set split_size="32M"
 set legal_fn=`echo "${1}" | sed 's/\//#/g'`
 set full_uncompressed_fn="${uncompressed_path}/${legal_fn}-${datafile_date}.${datafile_ext}"
 set full_compressed_fn="${compressed_path}/${legal_fn}-${datafile_date}.${compressed_datafile_ext}"
-gpg --batch --yes --passphrase-fd 1 --passphrase-file ${pwd_file} --output - -c ${full_uncompressed_fn} | gzip -3 | split -b ${split_size} -d -a 4 - ${full_compressed_fn}_
+gpg --batch --yes --passphrase-fd 1 --passphrase-file "${pwd_file}" --output - -c "${full_uncompressed_fn}" | gzip -3 | split -b "${split_size}" -d -a 4 - "${full_compressed_fn}"_
 if ($? == 0) then
         echo "Successfully encrypted and compressed dataset ${1} on ${datafile_date} to ${full_compressed_fn}"
         echo "Deleting uncompressed backup ${full_uncompressed_fn} to save space"
-        rm ${full_uncompressed_fn}
+        rm "$full_uncompressed_fn"
 else
         echo "Failed to encrypt and compress ${1} backup for date ${datafile_date} to ${full_compressed_fn}"
 endif

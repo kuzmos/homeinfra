@@ -23,7 +23,7 @@ set full_compressed_fn="${compressed_path}/${legal_fn}-${datafile_prev_date}-${d
 gpg --batch --yes --passphrase-fd 1 --passphrase-file "$pwd_file" --output - -c "$full_uncompressed_fn" | gzip -3 | split -b "$split_size" -d -a 4 - "$full_compressed_fn"_
 if ($? == 0) then
         echo "Successfully encrypted and compressed dataset ${1} differential backup for dates ${datafile_prev_date} and ${datafile_date} to ${full_compressed_fn}"
-        echo "deleting uncompressed backup ${full_uncompressed_fn} to save space"
+        echo "Deleting uncompressed backup ${full_uncompressed_fn} to save space"
         rm "$full_uncompressed_fn"
 else
         echo "Failed to encrypt and compress ${1} differential backup for dates ${datafile_prev_date} and ${datafile_date} to ${full_compressed_fn}"
