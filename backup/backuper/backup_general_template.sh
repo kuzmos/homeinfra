@@ -3,16 +3,6 @@
 # need to define backup_type, backup_date and collection_name in the executing script
 #####################################################################################
 
-# include email settings
-typeset mail_include="/home/admin/backup_scripts/private/mail_include.sh"
-. ${mail_include}
-
-# include hostnames, usernames etc.
-
-typeset private_include="/home/admin/backup_scripts/private/private_include.sh"
-. ${private_include}
-
-
 failure() {
 	typeset mail_content="\
 Subject:$(hostname): Failed ${backup_type} backup by ${backup_method} of ${collection_name} for date ${backup_date}\n\
@@ -24,9 +14,20 @@ ${email_footer}"
 	echo "${mail_content}" | sendmail $monitoring_email
 }
 
+# input parameters check
+if [[ -z $monitoring_email ]]; then
+	echo "Monitoring email address is empty."
+	exit 1
+fi
+
+if [[ -z $remote_command ]]; then
+	failure "Secure copy server parameter is empty."
+	exit 1
+fi
+
 # select method of backup
 # if backup linux VM is available, prefer SCP
-# otherwise, use cadaverto upload directly to webdav
+# otherwise, use cadaver to upload directly to webdav
 
 # remote command defined in external file
 ${remote_command} 'echo hello'>/dev/null 2>&1
