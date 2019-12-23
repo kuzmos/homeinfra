@@ -18,7 +18,7 @@ typeset backup_server="${10}"
 typeset dir_scripts_prefix="${11}"
 
 # include email settings
-typeset mail_include="mail_include.sh"
+typeset mail_include="${dir_scripts_prefix}/mail_include.sh"
 . ${mail_include}
 
 backup_date="${2} - ${3}"

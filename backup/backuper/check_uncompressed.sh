@@ -1,13 +1,14 @@
 #!/bin/ksh
-if [[ $# -ne 2 ]]; then
-	echo "Expected 2 parameters: <location_of_uncompressed_backups> <monitoring_email_address>"
+if [[ $# -ne 3 ]]; then
+	echo "Expected 3 parameters: <location_of_uncompressed_backups> <monitoring_email_address> <dir_scripts_prefix>"
 	exit 1
 fi
 
 typeset location="${1}"
 typeset monitoring_email="${2}"
+typeset dir_scripts_prefix="${3}"
 
-mail_include="mail_include.sh"
+mail_include="${dir_scripts_prefix}/mail_include.sh"
 . "${mail_include}"
 
 message="$(date): Checking contents of ${location}\n"

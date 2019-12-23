@@ -20,6 +20,9 @@ typeset dir_scripts_prefix="${10}"
 backup_date="${2}"
 collection_name="${1}"
 
+mail_include="${dir_scripts_prefix}/mail_include.sh"
+. "${mail_include}"
+
 backup_cadaver_functions="${dir_scripts_prefix}/backup_cadaver_functions.sh"
 . "${backup_cadaver_functions}"
 
