@@ -89,11 +89,13 @@ message="${message}${stdoutput}"
 typeset finish_date=`gdate '+%s'`
 let total_runtime_sec=${finish_date}-${start_date}
 typeset total_runtime=`gdate -u -d @${total_runtime_sec} +"%T"`
+typeset total_runtime_days=`gdate -u -d @${total_runtime_sec} +"%-d"`
+let total_runtime_days=${total_runtime_days}-1
 
 mail_content="\
 Subject:$(hostname): Finished ${backup_type} backup by ${backup_method} of ${collection_name} for date ${backup_date}\n\
 ${email_header}\n\
-Total runtime: ${total_runtime}\n\
+Total runtime: ${total_runtime_days} day(s) ${total_runtime}\n\
 ${message}\n\
 ${email_footer}"
 

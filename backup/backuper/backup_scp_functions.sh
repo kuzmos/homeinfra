@@ -26,7 +26,7 @@ scp_backup() {
 	echo "Outputting progress to ${scp_output_fn}"
 	for fn in `echo "${all_files}"` 
 	do
-		echo "Copying ${fn} to ${webdav_dir}..."
+		#echo "Copying ${fn} to ${webdav_dir}..."
 		$(${remote_command} "cp -f ${fn} ${webdav_dir}" 2>>${scp_output_fn})
 		if [[ $? -ne 0 ]]; then
 			echo "${fn} : failed to copy to ${webdav_dir} using command ${remote_command} \"cp -f ${fn} ${webdav_dir}\"" >> "${scp_output_fn}" 2>&1 
