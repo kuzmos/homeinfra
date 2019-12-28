@@ -27,7 +27,7 @@ collection_name="${1}"
 backup_cadaver_functions="${dir_scripts_prefix}/backup_cadaver_functions.sh"
 . "${backup_cadaver_functions}"
 
-backup_scp_functions="${dir_scripts_prefix}/backup_scripts/backup_scp_functions.sh"
+backup_scp_functions="${dir_scripts_prefix}/backup_scp_functions.sh"
 . "${backup_scp_functions}"
 
 backup_general_template="${dir_scripts_prefix}/backup_general_template.sh"
