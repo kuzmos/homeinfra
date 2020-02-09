@@ -30,6 +30,13 @@ if [[ $? -ne 0 ]]; then
         exit 1
 fi
 
+chmod -R g+r "${root_maildir}"/"${new_username}"
+
+if [[ $? -ne 0 ]]; then
+        echo "adding read permissions to maildir ${root_maildir}"/"${new_username} failed"
+        exit 1
+fi
+
 ln -s "${root_maildir}"/"${new_username}"/Maildir  /home/"${new_username}"/Maildir
 
 if [[ $? -ne 0 ]]; then
