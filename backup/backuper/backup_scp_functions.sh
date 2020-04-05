@@ -6,7 +6,7 @@ scp_backup() {
 		echo "Terminating script"
 		exit 1
 	fi
-
+	typeset retries=3
 	typeset fn_mask="${1}"
 	typeset webdav_dir="${2}"
 	typeset nas_dir="${3}"
@@ -29,8 +29,29 @@ scp_backup() {
 		#echo "Copying ${fn} to ${webdav_dir}..."
 		$(${remote_command} "cp -f ${fn} ${webdav_dir}" 2>>${scp_output_fn})
 		if [[ $? -ne 0 ]]; then
-			echo "${fn} : failed to copy to ${webdav_dir} using command ${remote_command} \"cp -f ${fn} ${webdav_dir}\"" >> "${scp_output_fn}" 2>&1 
-			let failed_files_count=${failed_files_count}+1
+			# retry copying
+			echo "${fn} : will retry copy to ${webdav_dir} using command ${remote_command} \"cp -f ${fn} ${webdav_dir}\"" >> "${scp_output_fn}" 2>&1 
+			typeset retry_success=1
+			typeset i=1
+			while [ ${i} -lt ${retries} ]
+		 	do
+				echo "${fn} : retry ${i} of ${retry}: copying to ${webdav_dir} using command ${remote_command} \"cp -f ${fn} ${webdav_dir}\"" >> "${scp_output_fn}" 2>&1 
+				
+				# retry copying
+				$(${remote_command} "cp -f ${fn} ${webdav_dir}" 2>>${scp_output_fn})
+				
+				if [[ $? -eq 0 ]]; then
+					# copy has been successfull
+					retry_success=0
+					break
+				fi
+				((i=i+1))
+			done
+
+			if [[ ${retry_success} -ne 0 ]]; then
+				echo "${fn} : failed to copy to ${webdav_dir} after ${retries} retries using command ${remote_command} \"cp -f ${fn} ${webdav_dir}\"" >> "${scp_output_fn}" 2>&1 
+				let failed_files_count=${failed_files_count}+1
+			fi
 		fi
 	done
 
