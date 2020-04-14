@@ -1,5 +1,6 @@
 scp_backup() {
-
+	typset retry_delay_s=5
+	typset check_delay_s=3
 	if [[ $# -ne 4 ]]; then
 		echo "Incorrect number of parameters for function scp_backup"
 		echo "Expected: 4, got: $#"
@@ -32,6 +33,7 @@ scp_backup() {
 		$(${remote_command} "cp -f ${fn} ${webdav_dir}" 2>>${scp_output_fn})
 		typeset copy_return_code=$?
 
+		sleep ${check_delay_s}
 		$(${remote_command} "ls ${webdav_dir}/${file_basename}" 2>>${scp_output_fn})
 		typeset ls_return_code=$?
 
@@ -43,14 +45,20 @@ scp_backup() {
 			while [ ${i} -lt ${retries} ]
 		 	do
 				echo "${fn} : retry ${i} of ${retries}: copying to ${webdav_dir} using command ${remote_command} \"cp -f ${fn} ${webdav_dir}\"" >> "${scp_output_fn}" 2>&1 
-				
+				echo "${fn} : will ls using command ${remote_command} \"ls ${webdav_dir}/${file_basename}\"" >> "${scp_output_fn}" 2>&1 
 				# retry copying
+				echo "Sleeping for ${retry_delay_s} seconds before retry"
+				sleep ${retry_delay_s}
 				$(${remote_command} "cp -f ${fn} ${webdav_dir}" 2>>${scp_output_fn})
 				copy_return_code=$?
 
+				echo "Sleeping for ${check_delay_s} seconds before check"
+				sleep ${check_delay_s}
 				$(${remote_command} "ls ${webdav_dir}/${file_basename}" 2>>${scp_output_fn})
 				ls_return_code=$?
 
+				echo "Copy return code: ${copy_return_code}" >> "${scp_output_fn}" 2>&1 
+				echo "Ls return code: ${ls_return_code}" >> "${scp_output_fn}" 2>&1 
 				if [[ ${copy_return_code} -eq 0 && ${ls_return_code} -eq 0 ]]; then
 					# copy has been successfull
 					retry_success=0
