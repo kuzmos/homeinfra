@@ -1,6 +1,6 @@
 scp_backup() {
-	typset retry_delay_s=5
-	typset check_delay_s=3
+	typeset retry_delay_s=5
+	typeset check_delay_s=3
 	if [[ $# -ne 4 ]]; then
 		echo "Incorrect number of parameters for function scp_backup"
 		echo "Expected: 4, got: $#"
@@ -27,51 +27,60 @@ scp_backup() {
 	echo "Outputting progress to ${scp_output_fn}"
 	for fn in `echo "${all_files}"` 
 	do
-		#echo "Copying ${fn} to ${webdav_dir}..."
+		echo "Copying ${fn} to ${webdav_dir}..."  >> "${scp_output_fn}" 2>&1
 		typeset file_basename=${fn##*/}
 		
-		$(${remote_command} "cp -f ${fn} ${webdav_dir}" 2>>${scp_output_fn})
+		$(${remote_command} "cp -f ${fn} ${webdav_dir}" >> ${scp_output_fn} 2>&1)
 		typeset copy_return_code=$?
+		
+		if [[ ${copy_return_code} -ne 0 ]]; then
+			echo "${fn} : cp return code was non-zero: ${copy_return_code}. Will sleep for ${check_delay_s} seconds and check the file status" >> "${scp_output_fn}" 2>&1 
+			sleep ${check_delay_s}
+			echo "${fn} : will ls using command ${remote_command} \"ls ${webdav_dir}/${file_basename}\"" >> "${scp_output_fn}" 2>&1 
+			$(${remote_command} "ls ${webdav_dir}/${file_basename}" >> ${scp_output_fn} 2>&1)
+			typeset ls_return_code=$?
 
-		sleep ${check_delay_s}
-		$(${remote_command} "ls ${webdav_dir}/${file_basename}" 2>>${scp_output_fn})
-		typeset ls_return_code=$?
-
-		if [[ ${copy_return_code} -ne 0 || ${ls_return_code} -ne 0 ]]; then
-			# retry copying
-			echo "${fn} : will retry copy to ${webdav_dir} using command ${remote_command} \"cp -f ${fn} ${webdav_dir}\"" >> "${scp_output_fn}" 2>&1 
-			typeset retry_success=1
-			typeset i=1
-			while [ ${i} -lt ${retries} ]
-		 	do
-				echo "${fn} : retry ${i} of ${retries}: copying to ${webdav_dir} using command ${remote_command} \"cp -f ${fn} ${webdav_dir}\"" >> "${scp_output_fn}" 2>&1 
-				echo "${fn} : will ls using command ${remote_command} \"ls ${webdav_dir}/${file_basename}\"" >> "${scp_output_fn}" 2>&1 
+			if [[ ${ls_return_code} -ne 0 ]]; then
 				# retry copying
-				echo "Sleeping for ${retry_delay_s} seconds before retry"
-				sleep ${retry_delay_s}
-				$(${remote_command} "cp -f ${fn} ${webdav_dir}" 2>>${scp_output_fn})
-				copy_return_code=$?
+				echo "${fn} : ls return code was non-zero: ${ls_return_code}. Will sleep for ${check_delay_s} seconds and retry copy" >> "${scp_output_fn}" 2>&1 
+				echo "${fn} : will retry copy to ${webdav_dir} using command ${remote_command} \"cp -f ${fn} ${webdav_dir}\"" >> "${scp_output_fn}" 2>&1 
+				typeset retry_success=1
+				typeset i=1
+				while [ ${i} -le ${retries} ]
+		 		do
+					echo "${fn} : retry ${i} of ${retries}: copying to ${webdav_dir} using command ${remote_command} \"cp -f ${fn} ${webdav_dir}\"" >> "${scp_output_fn}" 2>&1 
+					echo "${fn} : will ls using command ${remote_command} \"ls ${webdav_dir}/${file_basename}\"" >> "${scp_output_fn}" 2>&1 
+					# retry copying
+					echo "Sleeping for ${retry_delay_s} seconds before retry" >> ${scp_output_fn} 2>&1
+					sleep ${retry_delay_s}
+					$(${remote_command} "cp -f ${fn} ${webdav_dir}" >> ${scp_output_fn} 2>&1)
+					copy_return_code=$?
 
-				echo "Sleeping for ${check_delay_s} seconds before check"
-				sleep ${check_delay_s}
-				$(${remote_command} "ls ${webdav_dir}/${file_basename}" 2>>${scp_output_fn})
-				ls_return_code=$?
+					echo "Sleeping for ${check_delay_s} seconds before check" >> ${scp_output_fn} 2>&1
+					sleep ${check_delay_s}
+					$(${remote_command} "ls ${webdav_dir}/${file_basename}" >> ${scp_output_fn} 2>&1)
+					ls_return_code=$?
 
-				echo "Copy return code: ${copy_return_code}" >> "${scp_output_fn}" 2>&1 
-				echo "Ls return code: ${ls_return_code}" >> "${scp_output_fn}" 2>&1 
-				if [[ ${copy_return_code} -eq 0 && ${ls_return_code} -eq 0 ]]; then
-					# copy has been successfull
-					retry_success=0
-					echo "${fn} : retry ${i} of ${retries} successful: copied to ${webdav_dir} using command ${remote_command} \"cp -f ${fn} ${webdav_dir}\"" >> "${scp_output_fn}" 2>&1 
-					break
+					echo "copy return code: ${copy_return_code}" >> "${scp_output_fn}" 2>&1 
+					echo "ls return code: ${ls_return_code}" >> "${scp_output_fn}" 2>&1 
+					if [[ ${copy_return_code} -eq 0 && ${ls_return_code} -eq 0 ]]; then
+						# copy has been successfull
+						retry_success=0
+						echo "${fn} : retry ${i} of ${retries} successful: copied to ${webdav_dir} using command ${remote_command} \"cp -f ${fn} ${webdav_dir}\"" >> "${scp_output_fn}" 2>&1 
+						break
+					fi
+					((i=i+1))
+				done
+
+				if [[ ${retry_success} -ne 0 ]]; then
+					echo "${fn} : failed to copy to ${webdav_dir} after ${retries} retries using command ${remote_command} \"cp -f ${fn} ${webdav_dir}\"" >> "${scp_output_fn}" 2>&1 
+					let failed_files_count=${failed_files_count}+1
 				fi
-				((i=i+1))
-			done
-
-			if [[ ${retry_success} -ne 0 ]]; then
-				echo "${fn} : failed to copy to ${webdav_dir} after ${retries} retries using command ${remote_command} \"cp -f ${fn} ${webdav_dir}\"" >> "${scp_output_fn}" 2>&1 
-				let failed_files_count=${failed_files_count}+1
+			else
+				echo "${fn} : ls return code was: ${ls_return_code}. File copied successfully without retries." >> "${scp_output_fn}" 2>&1 
 			fi
+		else
+			echo "${fn} : cp return code was ${copy_return_code}. File copied successfully." >> "${scp_output_fn}" 2>&1 
 		fi
 	done
 
@@ -86,20 +95,20 @@ scp_backup() {
 	if [[ "${failed_files_count}" -ne 0 || "${all_files_count}" -eq 0 ]]; then
 
 		if [[ "${all_files_count}" -eq 0 ]]; then
-			echo "No valid files to be uploaded"
+			echo "No valid files to be uploaded."
 		else
-			echo "${failed_files_count} files out of ${all_files_count} failed to be uploaded"
-			echo "Check the output at ${scp_output_fn}"
+			echo "${failed_files_count} files out of ${all_files_count} failed to be uploaded."
+			echo "Check the output at ${scp_output_fn}."
 		fi
 		return 1
 	else
 		if [[ "${all_copied_files_count}" -eq "${all_files_count}" ]]; then
-			echo "All ${all_files_count} file(s) uploaded successfully"
+			echo "All ${all_files_count} file(s) uploaded successfully."
 			return 0
 		fi
 		
-		echo "Source and destination number of files differ"
-		echo "Source files count: ${all_files_count}, destination files count: ${all_copied_files_count}"
+		echo "Source and destination number of files differ."
+		echo "Source files count: ${all_files_count}, destination files count: ${all_copied_files_count} ."
 		return 1
 	fi
 }
