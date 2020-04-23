@@ -27,60 +27,67 @@ scp_backup() {
 	echo "Outputting progress to ${scp_output_fn}"
 	for fn in `echo "${all_files}"` 
 	do
-		echo "Copying ${fn} to ${webdav_dir}..."  >> "${scp_output_fn}" 2>&1
 		typeset file_basename=${fn##*/}
-		
-		$(${remote_command} "cp -f ${fn} ${webdav_dir}" >> ${scp_output_fn} 2>&1)
-		typeset copy_return_code=$?
-		
-		if [[ ${copy_return_code} -ne 0 ]]; then
-			echo "${fn} : cp return code was non-zero: ${copy_return_code}. Will sleep for ${check_delay_s} seconds and check the file status" >> "${scp_output_fn}" 2>&1 
-			sleep ${check_delay_s}
-			echo "${fn} : will ls using command ${remote_command} \"ls ${webdav_dir}/${file_basename}\"" >> "${scp_output_fn}" 2>&1 
-			$(${remote_command} "ls ${webdav_dir}/${file_basename}" >> ${scp_output_fn} 2>&1)
-			typeset ls_return_code=$?
+		# if target file does not exist or is different, copy
+		typeset local_file_checksum=`${remote_command} "sha256sum ${fn} | cut -d ' ' -f 1"`	
+		typeset remote_file_checksum=`${remote_command} "sha256sum ${webdav_dir}/${file_basename} | cut -d ' ' -f 1"`	
 
-			if [[ ${ls_return_code} -ne 0 ]]; then
+		echo "Local checksum: ${local_file_checksum}, remote checksum: ${remote_file_checksum}" >> ${scp_output_fn} 2>&1
+
+		if [[ "${local_file_checksum}" != "${remote_file_checksum}" ]]; then
+
+			echo "Remote file is not the same as local or is missing, copying ${fn} to ${webdav_dir}..."  >> "${scp_output_fn}" 2>&1
+
+			$(${remote_command} "cp -f ${fn} ${webdav_dir}" >> ${scp_output_fn} 2>&1)
+			typeset copy_return_code=$?
+
+			sleep ${check_delay_s}
+			echo "${fn} : will compare sha256 checksums after copy" >> "${scp_output_fn}" 2>&1 
+
+			typeset local_file_checksum=`${remote_command} "sha256sum ${fn} | cut -d ' ' -f 1"`	
+			typeset remote_file_checksum=`${remote_command} "sha256sum ${webdav_dir}/${file_basename} | cut -d ' ' -f 1"`	
+			if [[  "${local_file_checksum}" != "${remote_file_checksum}" ]]; then
 				# retry copying
-				echo "${fn} : ls return code was non-zero: ${ls_return_code}. Will sleep for ${check_delay_s} seconds and retry copy" >> "${scp_output_fn}" 2>&1 
+				echo "Checksums after copy not same: local checksum: ${local_file_checksum}, remote checksum: ${remote_file_checksum}" >> ${scp_output_fn} 2>&1
 				echo "${fn} : will retry copy to ${webdav_dir} using command ${remote_command} \"cp -f ${fn} ${webdav_dir}\"" >> "${scp_output_fn}" 2>&1 
 				typeset retry_success=1
 				typeset i=1
 				while [ ${i} -le ${retries} ]
-		 		do
+				do
 					echo "${fn} : retry ${i} of ${retries}: copying to ${webdav_dir} using command ${remote_command} \"cp -f ${fn} ${webdav_dir}\"" >> "${scp_output_fn}" 2>&1 
-					echo "${fn} : will ls using command ${remote_command} \"ls ${webdav_dir}/${file_basename}\"" >> "${scp_output_fn}" 2>&1 
-					# retry copying
-					echo "Sleeping for ${retry_delay_s} seconds before retry" >> ${scp_output_fn} 2>&1
-					sleep ${retry_delay_s}
-					$(${remote_command} "cp -f ${fn} ${webdav_dir}" >> ${scp_output_fn} 2>&1)
-					copy_return_code=$?
+					echo "${fn} : will compare sha256 checksums after retried copy" >> "${scp_output_fn}" 2>&1 
 
-					echo "Sleeping for ${check_delay_s} seconds before check" >> ${scp_output_fn} 2>&1
-					sleep ${check_delay_s}
-					$(${remote_command} "ls ${webdav_dir}/${file_basename}" >> ${scp_output_fn} 2>&1)
-					ls_return_code=$?
+						# retry copying
+						echo "Sleeping for ${retry_delay_s} seconds before retry" >> ${scp_output_fn} 2>&1
+						sleep ${retry_delay_s}
+						$(${remote_command} "cp -f ${fn} ${webdav_dir}" >> ${scp_output_fn} 2>&1)
+						copy_return_code=$?
 
-					echo "copy return code: ${copy_return_code}" >> "${scp_output_fn}" 2>&1 
-					echo "ls return code: ${ls_return_code}" >> "${scp_output_fn}" 2>&1 
-					if [[ ${copy_return_code} -eq 0 && ${ls_return_code} -eq 0 ]]; then
-						# copy has been successfull
-						retry_success=0
-						echo "${fn} : retry ${i} of ${retries} successful: copied to ${webdav_dir} using command ${remote_command} \"cp -f ${fn} ${webdav_dir}\"" >> "${scp_output_fn}" 2>&1 
-						break
+						echo "Sleeping for ${check_delay_s} seconds before check" >> ${scp_output_fn} 2>&1
+						sleep ${check_delay_s}
+						typeset local_file_checksum=`${remote_command} "sha256sum ${fn} | cut -d ' ' -f 1"`	
+						typeset remote_file_checksum=`${remote_command} "sha256sum ${webdav_dir}/${file_basename} | cut -d ' ' -f 1"`	
+
+						echo "copy return code: ${copy_return_code}" >> "${scp_output_fn}" 2>&1 
+						echo "Local checksum: ${local_file_checksum}, remote checksum: ${remote_file_checksum}" >> ${scp_output_fn} 2>&1
+						if [[ ${copy_return_code} -eq 0 && "${local_file_checksum}" == "${remote_file_checksum}" ]]; then
+							# copy has been successfull
+							retry_success=0
+							echo "${fn} : retry ${i} of ${retries} successful: copied to ${webdav_dir} using command ${remote_command} \"cp -f ${fn} ${webdav_dir}\"" >> "${scp_output_fn}" 2>&1 
+							break
+						fi
+						((i=i+1))
+					done
+
+					if [[ ${retry_success} -ne 0 ]]; then
+						echo "${fn} : failed to copy to ${webdav_dir} after ${retries} retries using command ${remote_command} \"cp -f ${fn} ${webdav_dir}\"" >> "${scp_output_fn}" 2>&1 
+						let failed_files_count=${failed_files_count}+1
 					fi
-					((i=i+1))
-				done
-
-				if [[ ${retry_success} -ne 0 ]]; then
-					echo "${fn} : failed to copy to ${webdav_dir} after ${retries} retries using command ${remote_command} \"cp -f ${fn} ${webdav_dir}\"" >> "${scp_output_fn}" 2>&1 
-					let failed_files_count=${failed_files_count}+1
+				else
+					echo "${fn} : Remote file checksum is the same as local. File copied successfully."  >> "${scp_output_fn}" 2>&1
 				fi
-			else
-				echo "${fn} : ls return code was: ${ls_return_code}. File copied successfully without retries." >> "${scp_output_fn}" 2>&1 
-			fi
 		else
-			echo "${fn} : cp return code was ${copy_return_code}. File copied successfully." >> "${scp_output_fn}" 2>&1 
+			echo "Remote file checksum is the same as local, will not copy ${fn} to ${webdav_dir}/${file_basename}"  >> "${scp_output_fn}" 2>&1
 		fi
 	done
 
@@ -106,7 +113,7 @@ scp_backup() {
 			echo "All ${all_files_count} file(s) uploaded successfully."
 			return 0
 		fi
-		
+
 		echo "Source and destination number of files differ."
 		echo "Source files count: ${all_files_count}, destination files count: ${all_copied_files_count} ."
 		return 1
