@@ -32,62 +32,88 @@ scp_backup() {
 		typeset local_file_checksum=`${remote_command} "sha256sum ${fn} | cut -d ' ' -f 1"`	
 		typeset remote_file_checksum=`${remote_command} "sha256sum ${webdav_dir}/${file_basename} | cut -d ' ' -f 1"`	
 
-		echo "Local checksum: ${local_file_checksum}, remote checksum: ${remote_file_checksum}" >> ${scp_output_fn} 2>&1
+		typeset timestamp=`date +%Y%m%d_%H%M%S`
+		echo "${timestamp}: Local checksum: ${local_file_checksum}, remote checksum: ${remote_file_checksum}" >> ${scp_output_fn} 2>&1
 
 		if [[ "${local_file_checksum}" != "${remote_file_checksum}" ]]; then
 
+			typeset timestamp=`date +%Y%m%d_%H%M%S`
 			echo "Remote file is not the same as local or is missing, copying ${fn} to ${webdav_dir}..."  >> "${scp_output_fn}" 2>&1
 
 			$(${remote_command} "cp -f ${fn} ${webdav_dir}" >> ${scp_output_fn} 2>&1)
 			typeset copy_return_code=$?
 
 			sleep ${check_delay_s}
-			echo "${fn} : will compare sha256 checksums after copy" >> "${scp_output_fn}" 2>&1 
+
+			typeset timestamp=`date +%Y%m%d_%H%M%S`
+			echo "${timestamp}: ${fn} : will compare sha256 checksums after copy" >> "${scp_output_fn}" 2>&1 
 
 			typeset local_file_checksum=`${remote_command} "sha256sum ${fn} | cut -d ' ' -f 1"`	
 			typeset remote_file_checksum=`${remote_command} "sha256sum ${webdav_dir}/${file_basename} | cut -d ' ' -f 1"`	
 			if [[  "${local_file_checksum}" != "${remote_file_checksum}" ]]; then
 				# retry copying
-				echo "Checksums after copy not same: local checksum: ${local_file_checksum}, remote checksum: ${remote_file_checksum}" >> ${scp_output_fn} 2>&1
-				echo "${fn} : will retry copy to ${webdav_dir} using command ${remote_command} \"cp -f ${fn} ${webdav_dir}\"" >> "${scp_output_fn}" 2>&1 
+
+				typeset timestamp=`date +%Y%m%d_%H%M%S`
+				echo "${timestamp}: Checksums after copy not same: local checksum: ${local_file_checksum}, remote checksum: ${remote_file_checksum}" >> ${scp_output_fn} 2>&1
+
+				typeset timestamp=`date +%Y%m%d_%H%M%S`
+				echo "${timestamp}: ${fn} : will retry copy to ${webdav_dir} using command ${remote_command} \"cp -f ${fn} ${webdav_dir}\"" >> "${scp_output_fn}" 2>&1 
 				typeset retry_success=1
 				typeset i=1
 				while [ ${i} -le ${retries} ]
 				do
-					echo "${fn} : retry ${i} of ${retries}: copying to ${webdav_dir} using command ${remote_command} \"cp -f ${fn} ${webdav_dir}\"" >> "${scp_output_fn}" 2>&1 
-					echo "${fn} : will compare sha256 checksums after retried copy" >> "${scp_output_fn}" 2>&1 
+
+					typeset timestamp=`date +%Y%m%d_%H%M%S`
+					echo "${timestamp}: ${fn} : retry ${i} of ${retries}: copying to ${webdav_dir} using command ${remote_command} \"cp -f ${fn} ${webdav_dir}\"" >> "${scp_output_fn}" 2>&1 
+
+					typeset timestamp=`date +%Y%m%d_%H%M%S`
+					echo "${timestamp}: ${fn} : will compare sha256 checksums after retried copy" >> "${scp_output_fn}" 2>&1 
 
 						# retry copying
-						echo "Sleeping for ${retry_delay_s} seconds before retry" >> ${scp_output_fn} 2>&1
+
+						typeset timestamp=`date +%Y%m%d_%H%M%S`
+						echo "${timestamp}: Sleeping for ${retry_delay_s} seconds before retry" >> ${scp_output_fn} 2>&1
 						sleep ${retry_delay_s}
 						$(${remote_command} "cp -f ${fn} ${webdav_dir}" >> ${scp_output_fn} 2>&1)
 						copy_return_code=$?
 
-						echo "Sleeping for ${check_delay_s} seconds before check" >> ${scp_output_fn} 2>&1
+						typeset timestamp=`date +%Y%m%d_%H%M%S`
+						echo "${timestamp}: Sleeping for ${check_delay_s} seconds before check" >> ${scp_output_fn} 2>&1
 						sleep ${check_delay_s}
 						typeset local_file_checksum=`${remote_command} "sha256sum ${fn} | cut -d ' ' -f 1"`	
 						typeset remote_file_checksum=`${remote_command} "sha256sum ${webdav_dir}/${file_basename} | cut -d ' ' -f 1"`	
 
-						echo "copy return code: ${copy_return_code}" >> "${scp_output_fn}" 2>&1 
-						echo "Local checksum: ${local_file_checksum}, remote checksum: ${remote_file_checksum}" >> ${scp_output_fn} 2>&1
+						typeset timestamp=`date +%Y%m%d_%H%M%S`
+						echo "${timestamp}: copy return code: ${copy_return_code}" >> "${scp_output_fn}" 2>&1 
+
+						typeset timestamp=`date +%Y%m%d_%H%M%S`
+						echo "${timestamp}: Local checksum: ${local_file_checksum}, remote checksum: ${remote_file_checksum}" >> ${scp_output_fn} 2>&1
 						if [[ ${copy_return_code} -eq 0 && "${local_file_checksum}" == "${remote_file_checksum}" ]]; then
 							# copy has been successfull
 							retry_success=0
-							echo "${fn} : retry ${i} of ${retries} successful: copied to ${webdav_dir} using command ${remote_command} \"cp -f ${fn} ${webdav_dir}\"" >> "${scp_output_fn}" 2>&1 
+
+							typeset timestamp=`date +%Y%m%d_%H%M%S`
+							echo "${timestamp}: ${fn} : retry ${i} of ${retries} successful: copied to ${webdav_dir} using command ${remote_command} \"cp -f ${fn} ${webdav_dir}\"" >> "${scp_output_fn}" 2>&1 
 							break
 						fi
 						((i=i+1))
 					done
 
 					if [[ ${retry_success} -ne 0 ]]; then
-						echo "${fn} : failed to copy to ${webdav_dir} after ${retries} retries using command ${remote_command} \"cp -f ${fn} ${webdav_dir}\"" >> "${scp_output_fn}" 2>&1 
+
+						typeset timestamp=`date +%Y%m%d_%H%M%S`
+						echo "${timestamp}: ${fn} : failed to copy to ${webdav_dir} after ${retries} retries using command ${remote_command} \"cp -f ${fn} ${webdav_dir}\"" >> "${scp_output_fn}" 2>&1 
 						let failed_files_count=${failed_files_count}+1
 					fi
 				else
-					echo "${fn} : Remote file checksum is the same as local. File copied successfully."  >> "${scp_output_fn}" 2>&1
+
+					typeset timestamp=`date +%Y%m%d_%H%M%S`
+					echo "${timestamp}: ${fn} : Remote file checksum is the same as local. File copied successfully."  >> "${scp_output_fn}" 2>&1
 				fi
 		else
-			echo "Remote file checksum is the same as local, will not copy ${fn} to ${webdav_dir}/${file_basename}"  >> "${scp_output_fn}" 2>&1
+	
+			typeset timestamp=`date +%Y%m%d_%H%M%S`
+			echo "${timestamp}: Remote file checksum is the same as local, will not copy ${fn} to ${webdav_dir}/${file_basename}"  >> "${scp_output_fn}" 2>&1
 		fi
 	done
 
