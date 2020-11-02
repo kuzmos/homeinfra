@@ -16,7 +16,7 @@ set compressed_path="$5"
 #echo "Compressing the backup for today"
 #set datafile_date=`date +"%Y%m%d"`
 
-set split_size="32M"
+set split_size="128M"
 set legal_fn=`echo "${1}" | sed 's/\//#/g'`
 set full_uncompressed_fn="${uncompressed_path}/${legal_fn}-${datafile_date}.${datafile_ext}"
 set full_compressed_fn="${compressed_path}/${legal_fn}-${datafile_date}.${compressed_datafile_ext}"
