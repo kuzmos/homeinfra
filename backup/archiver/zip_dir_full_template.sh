@@ -12,7 +12,7 @@ set datafile_date="$2"
 set pwd_file="$3"
 set uncompressed_path="$4"
 set compressed_path="$5"
-set split_size="32M"
+set split_size="128M"
 set legal_fn=`basename "${1}"`
 set full_compressed_fn="${compressed_path}/${legal_fn}-${datafile_date}.${compressed_datafile_ext}"
 tar -C "$1" -cf - "$1" |  gpg --batch --yes --passphrase-fd 1 --passphrase-file "${pwd_file}" --output - -c | gzip -3 | split -b "${split_size}" -d -a 4 - "${full_compressed_fn}"_
