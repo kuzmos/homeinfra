@@ -1,2 +1,2 @@
 # homeinfra
-Various home infrastructure scripts
+Various home infrastructure scripts.
