@@ -18,6 +18,7 @@ set full_compressed_fn="${compressed_path}/${legal_fn}-${datafile_date}.${compre
 tar -C "$1" -cf - "$1" |  gpg --batch --yes --passphrase-fd 1 --passphrase-file "${pwd_file}" --output - -c | gzip -3 | split -b "${split_size}" -d -a 4 - "${full_compressed_fn}"_
 if ($? == 0) then
         echo "`date`: Successfully encrypted and compressed directory ${1} on ${datafile_date} to ${full_compressed_fn}"
+	echo "Total `ls ${full_compressed_fn}* | wc -l | xargs` file(s), with size `du -hc ${full_compressed_fn}* | tail -1 | cut -f 1`"
 else
         echo "`date`: Failed to encrypt and compress directory ${1} for date ${datafile_date} to ${full_compressed_fn}"
 endif
