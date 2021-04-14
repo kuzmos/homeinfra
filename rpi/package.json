@@ -1,0 +1,25 @@
+{
+  "name": "appserver",
+  "version": "1.0.0",
+  "description": "RESTful app server",
+  "main": "test_server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "homeinfra"
+  },
+  "keywords": [
+    "rest",
+    "rpi"
+  ],
+  "author": "kuzmos",
+  "license": "ISC",
+  "dependencies": {
+    "connect": "^3.7.0",
+    "express": "^4.17.1",
+    "pi-gpio": "0.0.8",
+    "python-shell": "^3.0.0"
+  }
+}
