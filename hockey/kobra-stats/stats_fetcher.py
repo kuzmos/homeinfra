@@ -1,13 +1,53 @@
 import sys
+import os
 import requests
 from bs4 import BeautifulSoup
 import re
 from collections import Counter
+from datetime import datetime, timedelta
+import random
+import hashlib
 
+# Function to fetch HTML content from URL or cache
 def fetch_html_from_url(url):
+    # Get the user's home directory
+    home_dir = os.path.expanduser("~")
+    
+    # Set the cache folder path
+    cache_folder = os.path.join(home_dir, ".cache", "kobra-stats-fetcher")
+
+    # Ensure the cache directory exists
+    if not os.path.exists(cache_folder):
+        os.makedirs(cache_folder)
+
+    # Use hashlib to generate a consistent hash for the URL
+    url_hash = hashlib.sha256(url.encode()).hexdigest()
+    cache_file = os.path.join(cache_folder, f"{url_hash}.html")
+
+    # Check if the cache file exists and is not too old
+    if os.path.exists(cache_file):
+        mod_time = os.path.getmtime(cache_file)
+        last_modified = datetime.fromtimestamp(mod_time)
+        current_time = datetime.now()
+        age = current_time - last_modified
+
+        # If cache is not older than a random number of minutes between 1 and 5, use cache
+        random_age = random.uniform(3, 7)
+        if age.total_seconds() / 60 <= random_age:
+            with open(cache_file, 'r', encoding='utf-8') as f:
+                cached_content = f.read()
+                print(f"Using cached version for {url}")
+                return cached_content
+
     try:
         response = requests.get(url)
         response.raise_for_status()
+
+        # Save the new content to cache
+        with open(cache_file, 'w', encoding='utf-8') as f:
+            f.write(response.text)
+
+        print(f"Fetched a newer version for {url}")
         return response.text
     except requests.exceptions.RequestException as e:
         print(f"Error fetching HTML from URL: {e}")
@@ -159,12 +199,12 @@ def main():
             print(f"{cas}, {udalost}, strelec: {strelec}{asistence_output}")
 
         print("=" * 50)
-
+        
         # Count and output unique strings in strelec and asistence
         strelec_counter, asistence_counter = count_unique_strings(processed_data)
         print("Body:")
-        for key, value in strelec_counter.items():
-            goly_count = value
+        for key in set(strelec_counter.keys()) | set(asistence_counter.keys()):
+            goly_count = strelec_counter[key]
             asistence_count = asistence_counter[key] + asistence_counter.get('', 0)
             print(f"{key}: {goly_count} + {asistence_count}")
 
@@ -177,10 +217,10 @@ def main():
     asistence_aggregated = aggregate_asistence_across_match_ids(match_ids)
 
     print("=" * 50)
-
+    
     print("Body:")
-    for key, value in strelec_aggregated.items():
-        goly_count = value
+    for key in set(strelec_aggregated.keys()) | set(asistence_aggregated.keys()):
+        goly_count = strelec_aggregated[key]
         asistence_count = asistence_aggregated[key] + asistence_aggregated.get('', 0)
         print(f"{key}: {goly_count} + {asistence_count}")
 
