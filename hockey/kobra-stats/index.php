@@ -152,7 +152,8 @@ if (isset($config['url']['base_url'])) {
 	echo "<br/>";
 	echo "<br/>";
         foreach ($matchIds as $matchId) {
-            $cache_dir = getenv("HOME") . "/.cache/kobra-stats";
+            //$cache_dir = getenv("HOME") . "/.cache/kobra-stats";
+            $cache_dir = ".cache/kobra-stats";
             if (!file_exists($cache_dir)) {
                 mkdir($cache_dir, 0777, true);
             }
