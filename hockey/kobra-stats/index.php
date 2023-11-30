@@ -23,7 +23,7 @@
 // SOFTWARE.
 
 // Function to parse event data from HTML content
-function parseEventData($htmlContent) {
+function parseEventData($htmlContent,$query) {
     $dom = new DOMDocument;
     libxml_use_internal_errors(true);
     $dom->loadHTML($htmlContent);
@@ -31,7 +31,7 @@ function parseEventData($htmlContent) {
 
     $xpath = new DOMXPath($dom);
 
-    $query = '//table/tbody/tr[contains(td[4], "HC Kobra Praha") and starts-with(td[2], "gól")]';
+    //$query = '//table/tbody/tr[contains(td[4], "HC Kobra Praha") and starts-with(td[2], "gól")]';
 
     $trElements = $xpath->query($query);
 
@@ -74,7 +74,7 @@ function extractGoalDetails($goalContent) {
 }
 
 // Function to parse additional match information from HTML content
-function parseMatchData($htmlContent) {
+function parseMatchData($htmlContent,$infoQuery) {
     $dom = new DOMDocument;
     libxml_use_internal_errors(true);
     $dom->loadHTML($htmlContent);
@@ -82,7 +82,7 @@ function parseMatchData($htmlContent) {
 
     $xpath = new DOMXPath($dom);
 
-    $infoQuery = '//table[contains(@class, "sortable")]/tr/th | //table[contains(@class, "sortable")]/tr/td';
+    //$infoQuery = '//table[contains(@class, "sortable")]/tr/th | //table[contains(@class, "sortable")]/tr/td';
     $infoElements = $xpath->query($infoQuery);
 
     $matchInfo = [];
@@ -106,12 +106,15 @@ $config = parse_ini_file('config.ini', true);
 
 if (isset($config['url']['base_url'])) {
     $base_url = $config['url']['base_url'];
+    $points_query = $config['query']['points_query'];
+    $match_info_query = $config['query']['match_info_query'];
+    $pattern = $config['query']['match_id_pattern'];
     $min_cache_age = $config['cache']['min_age'];
     $max_cache_age = $config['cache']['max_age'];
 
     $html_base = file_get_contents($base_url);
 
-    $pattern = '/data-matchId="(\d+)"/';
+    //$pattern = '/data-matchId="(\d+)"/';
     preg_match_all($pattern, $html_base, $matches);
 
     if (!empty($matches[1])) {
@@ -148,7 +151,8 @@ if (isset($config['url']['base_url'])) {
 	echo "<h1 id='top'>Kobra mladší žáci B - statistiky 2023/2024</h1>";
 	echo "<img src='Kobra_Praha_logo.png' class='img-fluid'>";
 	echo "<br/>";
-	echo "<a href='#celkovestatistiky'>Celkové bodování hráčů</a><br />";
+	echo "<br/>";
+	echo "<h2><a href='#celkovestatistiky'>Celkové bodování hráčů</a></h2>";
 	echo "<br/>";
 	echo "<br/>";
         foreach ($matchIds as $matchId) {
@@ -174,8 +178,8 @@ if (isset($config['url']['base_url'])) {
                 $html = file_get_contents($cache_file);
             }
 
-            $result = parseEventData($html);
-            $matchInfo = parseMatchData($html);
+            $result = parseEventData($html,$points_query);
+            $matchInfo = parseMatchData($html,$match_info_query);
 
 	    $matchtitle = ""; 
 	    foreach ($matchInfo as $key => $value) {
@@ -214,9 +218,9 @@ if (isset($config['url']['base_url'])) {
             if (!empty($result)) {
 		 // Display goal and assistance information
 
-                echo "<h4>Góly a přihrávky</h4>";
+                echo "<h4>Góly a nahrávky</h4>";
                 echo "<table class='table table-bordered sortable table-hover'>";
-                echo "<thead class='table-light'><tr><th>Čas</th><th>Gól</th><th>Assistence</th></tr></thead>";
+                echo "<thead class='table-light'><tr><th>Čas</th><th>Gól</th><th>Nahrávky</th></tr></thead>";
                 echo "<tbody>";
                 // Initialize local counters
                 $goalCount = [];
@@ -246,7 +250,7 @@ if (isset($config['url']['base_url'])) {
                 // Output local counters in a table
                 echo "<h4>Statistiky hráčů za zápas</h4>";
                 echo "<table class='table table-bordered sortable table-hover'>";
-                echo "<thead class='table-light'><tr><th>Hráč</th><th>Góly</th><th>Assistence</th><th>Kanadské body</th></tr></thead>";
+                echo "<thead class='table-light'><tr><th>Hráč</th><th>Góly</th><th>Nahrávky</th><th>Body</th></tr></thead>";
                 echo "<tbody>";
                 foreach (array_keys($goalCount + $assistanceCount) as $player) {
                     echo "<tr>";
@@ -266,11 +270,9 @@ if (isset($config['url']['base_url'])) {
 
 	echo "<br/>";
 	// Output global counters in a table
-	
-	echo "<a href='#top'>Na začátek stránky</a><br /><br/>";
-        echo "<h2 id='celkovestatistiky'>Celkové bodování hráčů</h2>";
+        echo "<h2 id='celkovestatistiky'>Celkové bodování hráčů<br/><small class='text-muted'>Hráči, kteří nejsou v tabulce, nemají ani jeden gól nebo nahrávku</small></h2>";
         echo "<table class='table table-bordered sortable table-hover'>";
-        echo "<thead class='table-dark'><tr><th>Hráč</th><th>Góly</th><th>Přihrávky</th><th>Kanadské body</th></tr></thead>";
+        echo "<thead class='table-dark'><tr><th>Hráč</th><th>Góly</th><th>Nahrávky</th><th>Body</th></tr></thead>";
         echo "<tbody>";
         foreach (array_keys($globalGoalCount + $globalAssistanceCount) as $player) {
             echo "<tr>";
