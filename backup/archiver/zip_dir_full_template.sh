@@ -1,6 +1,6 @@
 #!/bin/csh
 
-if ( $# != 5 ) then
+if ( $#argv != 5 ) then
         echo "Expected 5 parameters: <directory> <backup_date> <pwd_file> <uncompressed_files_path> <compressed_files_path>"
         exit 1
 endif
