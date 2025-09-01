@@ -1,4 +1,4 @@
-#!/bin/ksh
+#!/bin/bash
 
 if [[ $# -ne 2 ]]; then
 	echo "Expected 2 parameters: <new_vpn_username> <root_openvpn_dir>"
@@ -8,10 +8,10 @@ fi
 new_vpn_username="$1"
 root_openvpn_dir="$2"
 
-pki_dir="${root_openvpn_dir}"/easy-rsa/3/pki
-cd "${root_openvpn_dir}"/easy-rsa/3
+pki_dir="${root_openvpn_dir}"/easy-rsa/pki
+cd "${root_openvpn_dir}"/easy-rsa/
 
-"${root_openvpn_dir}"/easy-rsa/3/easyrsa --batch=1 --pki-dir=${pki_dir} --req-cn="${new_vpn_username}" gen-req "${new_vpn_username}" nopass
+"${root_openvpn_dir}"/easy-rsa/easyrsa.real --batch=1 --pki-dir=${pki_dir} --req-cn="${new_vpn_username}" gen-req "${new_vpn_username}" nopass
 
 if [[ $? -ne 0 ]]; then
 	echo "Generating certificate request failed"
@@ -30,12 +30,12 @@ if [[ $? -ne 0 ]]; then
 	echo "Creating key failed"
 	exit 1
 fi
-"${root_openvpn_dir}"/easy-rsa/3/easyrsa --batch=1 --pki-dir=${pki_dir} show-req "${new_vpn_username}"
+"${root_openvpn_dir}"/easy-rsa/easyrsa.real --batch=1 --pki-dir=${pki_dir} show-req "${new_vpn_username}"
 if [[ $? -ne 0 ]]; then
 	echo "Disaplaying requirement failed"
 	exit 1
 fi
-"${root_openvpn_dir}"/easy-rsa/3/easyrsa --batch=1 --pki-dir=${pki_dir} sign client "${new_vpn_username}"
+"${root_openvpn_dir}"/easy-rsa/easyrsa.real --batch=1 --pki-dir=${pki_dir} sign client "${new_vpn_username}"
 if [[ $? -ne 0 ]]; then
 	echo "Signing requirement failed"
 	exit 1
