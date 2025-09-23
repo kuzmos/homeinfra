@@ -15,7 +15,7 @@ mail_base_dir="/var/mail/vhosts"
 vmail_user="vmail"
 newdirbase="${mail_base_dir}/${root_maildir}"
 
-mkdir "${newdirbase}"
+mkdir -p "${newdirbase}/Maildir"
 
 if [[ $? -ne 0 ]]; then
 	echo "creating new base mail dir failed"
@@ -30,10 +30,10 @@ if [[ $? -ne 0 ]]; then
 	exit 1
 fi
 
-touch "${newdirbase}"/sieve/managesieve.sieve
+mkdir -p "${newdirbase}"/sieve/managesieve.sieve/tmp
 
 if [[ $? -ne 0 ]]; then
-	echo "creating managesieve.sieve file failed"
+	echo "creating managesieve.sieve dir failed"
 	exit 1
 fi
 
