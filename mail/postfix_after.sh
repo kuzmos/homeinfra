@@ -1,14 +1,9 @@
-#!/usr/bin/env ksh
+#!/bin/ksh
 
-LOGFILE="$(pwd)/tmp/postfix_after.log"
-echo "=== START ===" > "$LOGFILE" 2>&1
-echo "Running as: $(whoami), cwd: $(pwd)" >> "$LOGFILE" 2>&1
-
-set -x  >> "$LOGFILE" 2>&1
-
-
-if [[ $# -ne 4 ]]; then
-	echo "Expected 4 parameters: <new_mail_username> <domain> <root_maildir> <quota>"
+if [[ $# -ne 3 ]]; then
+	echo "Expected 4 parameters: <new_mail_username> <domain> <root_maildir>"
+	echo "Example:"
+	echo "test@example.com' 'example.com' 'example.com/test/'"
 	exit 1
 fi
 
