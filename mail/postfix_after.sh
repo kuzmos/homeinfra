@@ -8,7 +8,7 @@ fi
 new_username="$1"
 domain="$2"
 root_maildir="$3"
-mail_group="mailers"
+mail_group="vmail"
 mail_base_dir="/var/mail/vhosts"
 vmail_user="vmail"
 newdirbase="${mail_base_dir}/${root_maildir}"
