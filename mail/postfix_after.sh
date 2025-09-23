@@ -1,4 +1,4 @@
-#!/bin/ksh
+#!/usr/bin/env ksh
 echo "Running as: $(whoami)" >> /tmp/postfix_after.log
 if [[ $# -ne 4 ]]; then
 	echo "Expected 4 parameters: <new_mail_username> <domain> <root_maildir> <quota>"
