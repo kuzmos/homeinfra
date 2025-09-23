@@ -42,9 +42,9 @@ if [[ $? -ne 0 ]]; then
 		        exit 1
 fi
 
-chown -h "${vmail_user}":"${mail_group}" "${newdirbase}"/.dovecot.sieve
+chmod -h g+w "${newdirbase}".dovecot.sieve
 
 if [[ $? -ne 0 ]]; then
-	        echo 'changing symlink "${newdirbase}"/.dovecot.sieve owner to "${vmail_user}:${mail_group}" failed'
+	        echo 'changing symlink "${newdirbase}"/.dovecot.sieve permissions to g+w failed'
 		        exit 1
 fi
