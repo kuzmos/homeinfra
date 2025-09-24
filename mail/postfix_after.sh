@@ -5,7 +5,7 @@ if [[ $# -ne 3 ]]; then
 	echo "Example:"
 	echo "'test@example.com' 'example.com' 'example.com/test/'"
 	echo "To launch for all mailboxes, do this:"
-	echo "for i in `doveadm user '*' | sed s/@exmaple/com//g`; do /path/to/postfix_after.sh ${i}@example.com example.com example.com/${i}/; done"
+	echo "for i in \`doveadm user \'*\' | sed s/@example/com//g\`; do /path/to/postfix_after.sh \${i}@example.com example.com example.com/\${i}/; done"
 	exit 1
 fi
 
