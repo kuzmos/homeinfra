@@ -1,9 +1,11 @@
 #!/bin/ksh
 
 if [[ $# -ne 3 ]]; then
-	echo "Expected 4 parameters: <new_mail_username> <domain> <root_maildir>"
+	echo "Expected 3 parameters: <new_mail_username> <domain> <root_maildir>"
 	echo "Example:"
 	echo "'test@example.com' 'example.com' 'example.com/test/'"
+	echo "To launch for all mailboxes, do this:"
+	echo "for i in `doveadm user '*' | sed s/@exmaple/com//g`; do /path/to/postfix_after.sh ${i}@example.com example.com example.com/${i}/; done"
 	exit 1
 fi
 
@@ -15,12 +17,41 @@ mail_base_dir="/var/mail/vhosts"
 vmail_user="vmail"
 newdirbase="${mail_base_dir}/${root_maildir}"
 
+id ${vmail_user} 2>&1
+
+if [[ $? -ne 0 ]]; then
+        echo "user ${vmail_user} does not exist"
+        exit 1
+fi
+
+
 mkdir -p "${newdirbase}/Maildir"
 
 if [[ $? -ne 0 ]]; then
 	echo "creating new base mail dir failed"
 	exit 1
 fi
+
+#touch -p "${newdirbase}"/sieve/managesieve.sieve/tmp
+
+#if [[ $? -ne 0 ]]; then
+#	echo "creating managesieve.sieve dir failed"
+#	exit 1
+#fi
+
+#ln -s "${newdirbase}"/sieve/managesieve.sieve "${newdirbase}"/.dovecot.sieve
+
+#if [[ $? -ne 0 ]]; then
+#        echo 'creating symlink "${newdirbase}"/.dovecot.sieve to "${newdirbase}"sieve/managesieve.sieve failed'
+#        exit 1
+#fi
+
+#chmod -h g+w "${newdirbase}".dovecot.sieve
+
+#if [[ $? -ne 0 ]]; then
+#        echo 'changing symlink "${newdirbase}"/.dovecot.sieve permissions to g+w failed'
+#        exit 1
+#fi
 
 chown -R ${vmail_user}:${mail_group} "${newdirbase}"
 
@@ -36,30 +67,3 @@ if [[ $? -ne 0 ]]; then
         exit 1
 fi
 
-mkdir "${newdirbase}"/sieve
-
-if [[ $? -ne 0 ]]; then
-	echo "creating sieve dir failed"
-	exit 1
-fi
-
-mkdir -p "${newdirbase}"/sieve/managesieve.sieve/tmp
-
-if [[ $? -ne 0 ]]; then
-	echo "creating managesieve.sieve dir failed"
-	exit 1
-fi
-
-ln -s "${newdirbase}"/sieve/managesieve.sieve "${newdirbase}"/.dovecot.sieve
-
-if [[ $? -ne 0 ]]; then
-        echo 'creating symlink "${newdirbase}"/.dovecot.sieve to "${newdirbase}"sieve/managesieve.sieve failed'
-        exit 1
-fi
-
-chmod -h g+w "${newdirbase}".dovecot.sieve
-
-if [[ $? -ne 0 ]]; then
-        echo 'changing symlink "${newdirbase}"/.dovecot.sieve permissions to g+w failed'
-        exit 1
-fi
