@@ -17,7 +17,7 @@ mail_base_dir="/var/mail/vhosts"
 vmail_user="vmail"
 newdirbase="${mail_base_dir}/${root_maildir}"
 
-id ${vmail_user} /dev/null 2>&1
+id ${vmail_user} > /dev/null 2>&1
 
 if [[ $? -ne 0 ]]; then
         echo "user ${vmail_user} does not exist"
