@@ -32,27 +32,6 @@ if [[ $? -ne 0 ]]; then
 	exit 1
 fi
 
-#touch -p "${newdirbase}"/sieve/managesieve.sieve/tmp
-
-#if [[ $? -ne 0 ]]; then
-#	echo "creating managesieve.sieve dir failed"
-#	exit 1
-#fi
-
-#ln -s "${newdirbase}"/sieve/managesieve.sieve "${newdirbase}"/.dovecot.sieve
-
-#if [[ $? -ne 0 ]]; then
-#        echo 'creating symlink "${newdirbase}"/.dovecot.sieve to "${newdirbase}"sieve/managesieve.sieve failed'
-#        exit 1
-#fi
-
-#chmod -h g+w "${newdirbase}".dovecot.sieve
-
-#if [[ $? -ne 0 ]]; then
-#        echo 'changing symlink "${newdirbase}"/.dovecot.sieve permissions to g+w failed'
-#        exit 1
-#fi
-
 chown -R ${vmail_user}:${mail_group} "${newdirbase}"
 
 if [[ $? -ne 0 ]]; then
